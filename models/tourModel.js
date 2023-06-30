@@ -1,6 +1,21 @@
 const mongoose = require('mongoose');
 const { default: slugify } = require('slugify');
 
+const pointSchema = new mongoose.Schema({
+  type: {
+    type: String,
+    default: 'Point',
+    enum: ['Point'],
+    required: true,
+  },
+  coordinates: {
+    type: [Number],
+    required: true,
+  },
+  address: String,
+  description: String,
+  day: Number,
+});
 const tourSchema = new mongoose.Schema(
   {
     name: {
@@ -11,6 +26,7 @@ const tourSchema = new mongoose.Schema(
       maxlength: [48, 'A tour must have less or equal to 48 character'],
       minlength: [10, 'A tour must have more or equal to 10 characters'],
     },
+    locations: { type: [pointSchema] },
     duration: {
       type: Number,
       required: [true, 'A tour must have a duration'],
@@ -27,6 +43,12 @@ const tourSchema = new mongoose.Schema(
         message: 'Difficulty can only be easy medium and difficult',
       },
     },
+    guides: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'User',
+      },
+    ],
     ratingsAverage: {
       type: Number,
       default: 4.5,
@@ -59,6 +81,7 @@ const tourSchema = new mongoose.Schema(
       trim: true,
       required: [true, 'A tour must have a description'],
     },
+    description: String,
     imageCover: {
       type: String,
       required: [true, 'A tour must have a cover image'],
@@ -75,6 +98,14 @@ const tourSchema = new mongoose.Schema(
   {
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
+    virtuals: {
+      startLocation: {
+        get() {
+          if (this.locations.length > 0) return this.locations[0];
+          return undefined;
+        },
+      },
+    },
   }
 );
 
@@ -87,14 +118,31 @@ tourSchema.pre('save', function (next) {
   this.slug = slugify(this.name, { lower: true });
   next();
 });
+
+// tourSchema.pre('save', async function (next) {
+//   const guidePromises = this.guides.map(async (id) => await User.findById(id));
+//   this.guides = await Promise.all(guidePromises);
+//   next();
+// });
+
 // eslint-disable-next-line prefer-arrow-callback
 // tourSchema.post('save', function (doc, next) {
 //   console.log(doc);
 //   next();
 // });
-// pos run on the result of the query
+
+// pre run on the result of the query
 tourSchema.pre(/^find/, function (next) {
   this.find({ secretTour: { $ne: true } });
+  next();
+});
+
+// pre run on the result of the query
+tourSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: 'guides',
+    select: '-__v',
+  });
   next();
 });
 

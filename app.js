@@ -11,6 +11,7 @@ const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
+const reviewRouter = require('./routes/reviewRoutes');
 
 const rateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
@@ -19,21 +20,44 @@ const rateLimiter = rateLimit({
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   message: 'Rate limit exceeded for this client',
 });
+const sanitizeOptions = {
+  ALLOWED_TAGS: [],
+  ALLOWED_ATTR: [],
+};
+const isNumber = (x) => typeof x === 'number';
+const isString = (x) => typeof x === 'string' || x instanceof String;
+const isArray = (x) => x.constructor === Array;
+const isObject = (x) => x instanceof Object;
 
-const santizeObject = (obj) =>
-  Object.keys(obj).reduce((accumulatedObject, key) => {
-    accumulatedObject[key] = DOMPurify.sanitize(obj[key], {
-      ALLOWED_TAGS: [],
-      ALLOWED_ATTR: [],
-    });
+const santizeObject = function (obj) {
+  return Object.keys(obj).reduce((accumulatedObject, key) => {
+    if (isNumber(obj[key])) accumulatedObject[key] = obj[key];
+    else if (isString(obj[key]))
+      accumulatedObject[key] = DOMPurify.sanitize(obj[key], sanitizeOptions);
+    else if (isArray(obj[key]))
+      // eslint-disable-next-line no-use-before-define
+      accumulatedObject[key] = sanitizeArray(obj[key]);
+    else if (isObject(obj[key]))
+      accumulatedObject[key] = santizeObject(obj[key]);
     return accumulatedObject;
   }, {});
+};
+
+const sanitizeArray = function (arr) {
+  return arr.map((element) => {
+    if (isNumber(element)) return element;
+    if (isString(element)) return DOMPurify.sanitize(element, sanitizeOptions);
+    if (isArray(element)) {
+      sanitizeArray(element);
+      return element;
+    }
+    return santizeObject(element);
+  });
+};
 
 const xssSanitize = (req, res, next) => {
-  const sanitizedBody = santizeObject(req.body);
-  const santizedParams = santizeObject(req.params);
-  req.body = sanitizedBody;
-  req.params = santizedParams;
+  if (req.body) req.body = santizeObject(req.body);
+  if (req.query) req.query = santizeObject(req.query);
   next();
 };
 
@@ -74,9 +98,11 @@ app.use(
 // serving static files
 app.use(express.static(`${__dirname}/public`));
 
+if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
 // routing middleware
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
+app.use('/api/v1/reviews', reviewRouter);
 
 // default route for unknown routes
 app.all('*', (req, res, next) => {

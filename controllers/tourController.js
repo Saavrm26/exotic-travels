@@ -10,7 +10,6 @@ const getAllTours = catchAsync(async (req, res, next) => {
     .limitFields()
     .paginate();
   const tours = await features.query;
-
   // 2) Sending the result
   res.status(200).json({
     status: 'success',
@@ -35,6 +34,7 @@ const getTour = catchAsync(async (req, res, next) => {
 });
 
 const createTour = catchAsync(async (req, res, next) => {
+  // console.log(req.body, req.body.locations);
   const newTour = await Tour.create(req.body);
   res.status(201).json({
     status: 'success',
