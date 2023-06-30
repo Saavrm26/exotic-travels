@@ -3,7 +3,7 @@ const filterObject = (obj, ...filterFields) =>
     .filter((key) => filterFields.includes(key))
     .reduce((accumulatedObj, key) => {
       accumulatedObj[key] = obj[key];
-      return obj;
+      return accumulatedObj;
     }, {});
 
 module.exports = filterObject;

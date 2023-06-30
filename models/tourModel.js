@@ -26,7 +26,7 @@ const tourSchema = new mongoose.Schema(
       maxlength: [48, 'A tour must have less or equal to 48 character'],
       minlength: [10, 'A tour must have more or equal to 10 characters'],
     },
-    locations: { type: [pointSchema] },
+    locations: { type: [pointSchema], required: true },
     duration: {
       type: Number,
       required: [true, 'A tour must have a duration'],
@@ -98,19 +98,22 @@ const tourSchema = new mongoose.Schema(
   {
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
-    virtuals: {
-      startLocation: {
-        get() {
-          if (this.locations.length > 0) return this.locations[0];
-          return undefined;
-        },
-      },
-    },
   }
 );
 
+tourSchema.virtual('startLocation').get(function () {
+  if (this.locations && this.locations.length > 0) return this.locations[0];
+  return undefined;
+});
+
 tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;
+});
+
+tourSchema.virtual('reviews', {
+  ref: 'Review',
+  localField: '_id',
+  foreignField: 'tour',
 });
 
 // DOCUMENT MIDDLEWARE, runs before .save() and .create()
