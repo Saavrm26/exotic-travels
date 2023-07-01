@@ -50,6 +50,7 @@ const updateReview = catchAsync(async (req, res, next) => {
   if (req.body.tour && !(await Tour.exists({ _id: req.body.tour }))) {
     throw new AppError('No such tour exists');
   }
+  // don't await this query as it is being awaited by a pre middleware, that is used to calculate average
   const updatedReview = await Review.findOneAndUpdate(
     {
       _id: req.params.reviewId,

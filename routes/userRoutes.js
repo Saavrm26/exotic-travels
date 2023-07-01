@@ -20,19 +20,19 @@ const {
 
 const router = express.Router();
 
-router.route('/').get(protect, restrictTo('admin'), getAllUsers);
 router.route('/signup').post(signup);
 router.route('/login').post(login);
 router.route('/forgotPassword').post(forgotPassword);
-router.route('/updatePassword').patch(protect, updatePassword);
-router.route('/me').patch(protect, getMe);
-router.route('/updateMe').patch(protect, updateMe);
-router.route('/deleteMe').delete(protect, deleteMe);
-router
-  .route('/:id')
-  .get(protect, restrictTo('admin'), getUser)
-  .patch(protect, restrictTo('admin'), updateUser)
-  .delete(protect, restrictTo('admin'), deleteUser);
 router.route('/resetPassword/:token').patch(resetPassword);
+
+router.use(protect);
+router.route('/me').get(getMe);
+router.route('/updateMe').patch(updateMe);
+router.route('/deleteMe').delete(deleteMe);
+router.route('/updatePassword').patch(updatePassword);
+
+router.use(restrictTo('admin'));
+router.route('/').get(getAllUsers);
+router.route('/:id').get(getUser).patch(updateUser).delete(deleteUser);
 
 module.exports = router;

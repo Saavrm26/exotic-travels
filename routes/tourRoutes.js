@@ -14,13 +14,18 @@ const reviewRouter = require('./reviewRoutes');
 const router = express.Router();
 router.use('/:tourId/reviews', reviewRouter);
 
-router.route('/').get(protect, getAllTours).post(createTour);
+router
+  .route('/')
+  .get(getAllTours)
+  .post(restrictTo('guide', 'lead-guide', 'admin'), createTour);
 router.route('/tour-stats').get(getTourStats);
-router.route('/monthly-plan/:year').get(getMonthyPlan);
+router
+  .route('/monthly-plan/:year')
+  .get(protect, restrictTo('admin', 'lead-guide', 'guide'), getMonthyPlan);
 router
   .route('/:id')
   .get(getTour)
-  .patch(updateTour)
-  .delete(protect, restrictTo('admin'), deleteTour);
+  .patch(protect, restrictTo('admin', 'lead-guide'), updateTour)
+  .delete(protect, restrictTo('admin', 'lead-guide'), deleteTour);
 
 module.exports = router;
