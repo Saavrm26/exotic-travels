@@ -47,6 +47,8 @@ const protect = catchAsync(async (req, res, next) => {
   //checking if token exists
   if (authorization && authorization.startsWith('Bearer')) {
     token = authorization.split(' ')[1];
+  } else if (req.cookie.jwt) {
+    token = req.cookie.jwt;
   }
   if (!token) {
     throw new AppError('User not logged in', 401);

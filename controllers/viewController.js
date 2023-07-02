@@ -20,4 +20,10 @@ const getTourView = catchAsync(async (req, res, next) => {
   });
 });
 
-module.exports = { getOverview, getTourView };
+const getLoginPage = catchAsync(async (req, res, next) => {
+  res.status(200).render('login', {
+    title: 'Login',
+  });
+});
+
+module.exports = { getOverview, getTourView, getLoginPage };
