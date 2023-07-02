@@ -16,6 +16,7 @@ app.set('views', path.join(__dirname, 'views'));
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
+const viewRouter = require('./routes/viewRoutes');
 
 const rateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
@@ -104,12 +105,11 @@ app.use(
 
 if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
 // routing middleware
-app.get('/', (req, res) => {
-  res.status(200).render('base');
-});
+
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewRouter);
+app.use('/', viewRouter);
 
 // default route for unknown routes
 app.all('*', (req, res, next) => {
