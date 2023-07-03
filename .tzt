@@ -1,0 +1,7 @@
+  "targets": {
+    "frontend": {
+      "source": "./public/js/index.js",
+      "distDir": "./public/dist/js",
+      "includeNodeModules": true
+    }
+  },

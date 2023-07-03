@@ -1,4 +1,5 @@
 const Tour = require('../models/tourModel');
+const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 
 const getOverview = catchAsync(async (req, res, next) => {
@@ -14,6 +15,7 @@ const getTourView = catchAsync(async (req, res, next) => {
     path: 'reviews',
     select: 'tour user review rating',
   });
+  if (!tour) throw new AppError('No such tour');
   res.status(200).render('tour', {
     title: tour.name,
     tour,

@@ -2,3 +2,7 @@ node_modules
 nodemon.json
 dev-data
 *.env
+**.parcel-cache
+*.out
+*.log
+public/dist

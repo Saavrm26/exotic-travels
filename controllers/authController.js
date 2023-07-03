@@ -40,6 +40,39 @@ const sendToken = (status, id, data, res) => {
   });
 };
 
+const isLoggedIn = async (req, res, next) => {
+  try {
+    const token = req.cookies.jwt;
+    if (!token) return next();
+
+    // verifying token
+    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+
+    // check if user exists
+    const currentUser = await User.findById(decoded.id).select(
+      '+passwordChangedAt'
+    );
+    if (!currentUser) {
+      return next();
+    }
+
+    // checking if password was changed after token was regenerated
+    if (
+      currentUser.changedPasswordAfter(
+        currentUser.passwordChangedAt,
+        decoded.iat
+      )
+    ) {
+      return next();
+    }
+    // user is logged in
+    res.locals.user = currentUser;
+  } catch {
+    /* empty */
+  }
+  next();
+};
+
 const protect = catchAsync(async (req, res, next) => {
   const { authorization } = req.headers;
   let token;
@@ -47,8 +80,8 @@ const protect = catchAsync(async (req, res, next) => {
   //checking if token exists
   if (authorization && authorization.startsWith('Bearer')) {
     token = authorization.split(' ')[1];
-  } else if (req.cookie.jwt) {
-    token = req.cookie.jwt;
+  } else if (req.cookies.jwt) {
+    token = req.cookies.jwt;
   }
   if (!token) {
     throw new AppError('User not logged in', 401);
@@ -73,7 +106,6 @@ const protect = catchAsync(async (req, res, next) => {
       'Password changed recently. Login again to generate a new token'
     );
   }
-  //
   req.user = currentUser;
   next();
 });
@@ -111,6 +143,11 @@ const login = catchAsync(async (req, res, next) => {
     throw new AppError('Incorrect email or password', 401);
   }
   sendToken(200, user._id, undefined, res);
+});
+
+const logout = catchAsync(async (req, res, next) => {
+  res.cookie('jwt', '', { expires: new Date(Date.now() + 10 * 1000) });
+  res.status(200).json({ message: 'success' });
 });
 
 const forgotPassword = catchAsync(async (req, res, next) => {
@@ -200,7 +237,9 @@ const updatePassword = catchAsync(async (req, res, next) => {
 module.exports = {
   signup,
   login,
+  logout,
   protect,
+  isLoggedIn,
   restrictTo,
   forgotPassword,
   resetPassword,

@@ -17,28 +17,47 @@ const handleValidationErrorDB = (err) => {
   return new AppError(message, 400);
 };
 
-const sendErrorDev = (err, res) => {
-  res.status(err.statusCode).json({
-    status: err.status,
-    name: err.name,
-    error: err.error,
-    message: err.message,
-    stack: err.stack,
-    ...err,
-  });
-};
-
-const sendErrorProduction = (err, res) => {
-  if (err.isOperational) {
+const sendErrorDev = (err, req, res) => {
+  if (req.originalUrl.startsWith('/api'))
     res.status(err.statusCode).json({
       status: err.status,
+      name: err.name,
+      error: err.error,
+      message: err.message,
+      stack: err.stack,
+      ...err,
+    });
+  else
+    res.status(err.statusCode).render('error', {
+      title: 'Something went wrong',
+      msg: err.message,
+    });
+};
+
+const sendErrorProduction = (err, req, res) => {
+  if (req.originalUrl.startsWith('/api')) {
+    if (err.isOperational) {
+      res.status(err.statusCode).json({
+        status: err.status,
+        message: err.message,
+      });
+    } else {
+      //Programming or other unknown error
+      res.status(500).json({
+        status: 'error',
+        message: 'Something went very wrong',
+      });
+    }
+  } else if (err.isOperational) {
+    res.status(err.statusCode).render('error', {
+      title: err.title,
       message: err.message,
     });
   } else {
     //Programming or other unknown error
-    res.status(500).json({
-      status: 'error',
-      message: 'Something went very wrong',
+    res.status(500).render('error', {
+      title: 'Something went wrong',
+      msg: 'Sorry Please try again',
     });
   }
 };
@@ -53,15 +72,16 @@ module.exports = (err, req, res, next) => {
   err.status = err.status || 'error';
 
   if (process.env.NODE_ENV === 'development') {
-    sendErrorDev(err, res);
+    sendErrorDev(err, req, res);
   } else if (process.env.NODE_ENV === 'production') {
     let error = { ...err };
+    error.message = err.message;
     if (err.name === 'CastError') error = handleCastErrorDB(error);
     // duplicate
     if (err.code === 11000) error = handleDuplicateErrorDB(error);
     if (err.name === 'ValidationError') error = handleValidationErrorDB(error);
     if (err.name === 'JsonWebTokenError') error = handleJWTError();
     if (err.name === 'TokenExpiredError') error = handleTokenExpiredError();
-    sendErrorProduction(error, res);
+    sendErrorProduction(error, req, res);
   }
 };

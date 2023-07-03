@@ -73,16 +73,17 @@ const xssSanitize = (req, res, next) => {
 app.use(express.static(path.join(__dirname, 'public')));
 
 // security middleware
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        'script-src': ["'self'", 'unpkg.com/axios/dist/axios.min.js'],
+if (process.env.NODE_ENV === 'development') {
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          'connect-src': ["'self'", 'ws://localhost:*'],
+        },
       },
-    },
-  })
-);
-
+    })
+  );
+} else app.use(helmet());
 // rate limiter middleware
 app.use('/api', rateLimiter);
 
