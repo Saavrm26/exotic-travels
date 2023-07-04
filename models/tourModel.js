@@ -82,7 +82,10 @@ const tourSchema = new mongoose.Schema(
       trim: true,
       required: [true, 'A tour must have a description'],
     },
-    description: String,
+    description: {
+      type: String,
+      required: [true, 'A tour must have a description'],
+    },
     imageCover: {
       type: String,
       required: [true, 'A tour must have a cover image'],
@@ -93,7 +96,10 @@ const tourSchema = new mongoose.Schema(
       default: Date.now(),
       select: false,
     },
-    startDates: [Date],
+    startDates: {
+      type: [Date],
+      required: [true, 'Atleast one start date is required'],
+    },
     slug: String,
   },
   {

@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
-const sendEmail = require('../utils/email');
+const Email = require('../utils/email');
 
 const signToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -12,7 +12,6 @@ const signToken = (id) =>
   });
 
 const sendToken = (status, id, data, res) => {
-  console.log(data);
   const token = signToken(id);
   const cookieOptions = {
     expires: new Date(
@@ -106,6 +105,8 @@ const protect = catchAsync(async (req, res, next) => {
       'Password changed recently. Login again to generate a new token'
     );
   }
+
+  res.locals.user = currentUser;
   req.user = currentUser;
   next();
 });
@@ -129,6 +130,8 @@ const signup = catchAsync(async (req, res, next) => {
     password,
     passwordConfirm,
   });
+  const url = `${req.protocol}://${req.get('host')}`;
+  await new Email(newUser, url).sendWelcome();
   sendToken(201, newUser._id, newUser, res);
 });
 
@@ -162,24 +165,18 @@ const forgotPassword = catchAsync(async (req, res, next) => {
   await user.save({ validateBeforeSave: false });
 
   // send the email to the user
-  const resetURL = `${req.protocol}://${req.get(
-    'host'
-  )}/api/v1/users/resetPassword/${resetToken}`;
-
-  const message = `Forgot your password? Submit a PATCH request with your new password and passwordConfirm to: ${resetURL}.\nIf you didn't forget your password,please ignore this email`;
 
   try {
-    await sendEmail({
-      email,
-      subject: 'Your password reset token will expire in 10 minutes',
-      message,
-    });
+    const resetURL = `${req.protocol}://${req.get(
+      'host'
+    )}/api/v1/users/resetPassword/${resetToken}`;
+    await new Email(user, resetURL).sendPasswordReset();
 
     res.status(200).json({
       staus: 'success',
       message: 'Token sent to email',
     });
-  } catch {
+  } catch (err) {
     user.passwordResetToken = undefined;
     user.passwordResetTokenExpiration = undefined;
     await user.save({ validateBeforeSave: false });

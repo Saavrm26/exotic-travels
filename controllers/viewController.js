@@ -28,4 +28,18 @@ const getLoginPage = catchAsync(async (req, res, next) => {
   });
 });
 
-module.exports = { getOverview, getTourView, getLoginPage };
+const getUserAccount = catchAsync(async (req, res, next) => {
+  res.status(200).render('account', {
+    title: 'Your account',
+  });
+});
+
+const updateUserData = catchAsync(async (req, res, next) => {});
+
+module.exports = {
+  getOverview,
+  getTourView,
+  getLoginPage,
+  getUserAccount,
+  updateUserData,
+};

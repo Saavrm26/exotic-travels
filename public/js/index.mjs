@@ -1,9 +1,12 @@
 /* eslint-disable */
 import { login } from './login.mjs';
 import { logout } from './logout.mjs';
+import { updateAccountData } from './updateAccountData.mjs';
 
-const loginForm = document.querySelector('.form');
+const loginForm = document.querySelector('.form--login');
 const logoutBtn = document.querySelector('.nav__el--logout');
+const updateAccountInfoForm = document.querySelector('.form-user-data');
+const updateAccountPasswordForm = document.querySelector('.form-user-password');
 
 if (loginForm)
   loginForm.addEventListener('submit', (e) => {
@@ -14,3 +17,39 @@ if (loginForm)
   });
 
 if (logoutBtn) logoutBtn.addEventListener('click', logout);
+
+if (updateAccountInfoForm)
+  updateAccountInfoForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append('name', updateAccountInfoForm.querySelector('#name').value);
+    formData.append(
+      'email',
+      updateAccountInfoForm.querySelector('#email').value
+    );
+    formData.append(
+      'photo',
+      updateAccountInfoForm.querySelector('.form__upload').files[0]
+    );
+
+    console.log(photo);
+    updateAccountData(formData, 'Information');
+  });
+
+if (updateAccountPasswordForm)
+  updateAccountPasswordForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    let oldPassword =
+      updateAccountPasswordForm.querySelector('#password-current').value;
+    let newPassword =
+      updateAccountPasswordForm.querySelector('#password').value;
+    let newPasswordConfirm =
+      updateAccountPasswordForm.querySelector('#password-confirm').value;
+    await updateAccountData(
+      { oldPassword, newPassword, newPasswordConfirm },
+      'Password'
+    );
+    updateAccountPasswordForm.querySelector('#password-current').value = '';
+    updateAccountPasswordForm.querySelector('#password').value = '';
+    updateAccountPasswordForm.querySelector('#password-confirm').value = '';
+  });

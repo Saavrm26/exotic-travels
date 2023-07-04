@@ -18,6 +18,7 @@ const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
 const viewRouter = require('./routes/viewRoutes');
+const bookingRoutes = require('./routes/bookingRoutes');
 
 const rateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
@@ -122,6 +123,7 @@ if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewRouter);
+app.use('/api/v1/bookings', bookingRoutes);
 app.use('/', viewRouter);
 
 // default route for unknown routes
