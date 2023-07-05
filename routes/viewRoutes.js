@@ -4,14 +4,14 @@ const {
   getTourView,
   getLoginPage,
   getUserAccount,
-  updateUserData,
+  getUserTours,
 } = require('../controllers/viewController');
 const { protect, isLoggedIn } = require('../controllers/authController');
 
 const router = express.Router();
 
 router.get('/me', protect, getUserAccount);
-router.get('/updateUserData', protect, updateUserData);
+router.get('/my-tours', protect, getUserTours);
 router.get('/tour/:tourSlug', protect, getTourView);
 
 router.use(isLoggedIn);

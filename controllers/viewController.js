@@ -1,3 +1,4 @@
+const Booking = require('../models/bookingModel');
 const Tour = require('../models/tourModel');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
@@ -34,12 +35,19 @@ const getUserAccount = catchAsync(async (req, res, next) => {
   });
 });
 
-const updateUserData = catchAsync(async (req, res, next) => {});
+const getUserTours = catchAsync(async (req, res, next) => {
+  const bookings = await Booking.find({ user: req.user._id }).populate({
+    path: 'tour',
+  });
+  let tours = [];
+  if (bookings) tours = bookings.map((booking) => booking.tour);
+  res.status(200).render('overview', { title: 'My Tours', tours });
+});
 
 module.exports = {
   getOverview,
   getTourView,
   getLoginPage,
   getUserAccount,
-  updateUserData,
+  getUserTours,
 };

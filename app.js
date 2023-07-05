@@ -4,6 +4,7 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
+const compression = require('compression');
 const DOMPurify = require('isomorphic-dompurify');
 const hpp = require('hpp');
 const cookieParser = require('cookie-parser');
@@ -63,8 +64,19 @@ const sanitizeArray = function (arr) {
 };
 
 const xssSanitize = (req, res, next) => {
-  if (req.body) req.body = santizeObject(req.body);
-  if (req.query) req.query = santizeObject(req.query);
+  try {
+    if (req.body && Object.keys(req.body).length !== 0)
+      req.body = JSON.parse(
+        DOMPurify.sanitize(JSON.stringify(req.body), sanitizeOptions)
+      );
+    if (req.query && Object.keys(req.query).length !== 0)
+      req.query = JSON.parse(
+        DOMPurify.sanitize(JSON.stringify(req.query), sanitizeOptions)
+      );
+  } catch (err) {
+    return next(err);
+  }
+
   next();
 };
 
@@ -92,11 +104,12 @@ app.use('/api', rateLimiter);
 if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
 
 // interprets body as json
-app.use(express.json({ limit: '10kb' }));
-
-// parse the cookies that come in the request
 app.use(cookieParser());
+app.use(compression());
+app.use('/api/v1/bookings', bookingRoutes);
 
+// parse the body json
+app.use(express.json({ limit: '50kb' }));
 // sanitize the body to remove all possible xss scripts/html
 app.use(xssSanitize);
 
@@ -123,7 +136,6 @@ if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewRouter);
-app.use('/api/v1/bookings', bookingRoutes);
 app.use('/', viewRouter);
 
 // default route for unknown routes

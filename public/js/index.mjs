@@ -1,12 +1,14 @@
 /* eslint-disable */
 import { login } from './login.mjs';
 import { logout } from './logout.mjs';
+import { redirectToCheckOut } from './stripe.mjs';
 import { updateAccountData } from './updateAccountData.mjs';
 
 const loginForm = document.querySelector('.form--login');
 const logoutBtn = document.querySelector('.nav__el--logout');
 const updateAccountInfoForm = document.querySelector('.form-user-data');
 const updateAccountPasswordForm = document.querySelector('.form-user-password');
+const bookTour = document.querySelector('.book-tour');
 
 if (loginForm)
   loginForm.addEventListener('submit', (e) => {
@@ -32,7 +34,6 @@ if (updateAccountInfoForm)
       updateAccountInfoForm.querySelector('.form__upload').files[0]
     );
 
-    console.log(photo);
     updateAccountData(formData, 'Information');
   });
 
@@ -52,4 +53,11 @@ if (updateAccountPasswordForm)
     updateAccountPasswordForm.querySelector('#password-current').value = '';
     updateAccountPasswordForm.querySelector('#password').value = '';
     updateAccountPasswordForm.querySelector('#password-confirm').value = '';
+  });
+
+if (bookTour)
+  bookTour.addEventListener('click', (e) => {
+    e.preventDefault();
+
+    redirectToCheckOut(bookTour.dataset.tourId);
   });

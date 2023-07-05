@@ -6,3 +6,5 @@ dev-data
 *.out
 *.log
 public/dist
+public/img
+stripe
