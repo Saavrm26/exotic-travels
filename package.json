@@ -1,6 +1,7 @@
 {
-  "name": "Natours",
+  "name": "exotic-tours",
   "scripts": {
+    "start": "node server.js",
     "pwatch": "parcel watch",
     "pbuild": "parcel build",
     "dev": "nodemon server.js",
